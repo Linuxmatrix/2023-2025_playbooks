@@ -1,0 +1,11 @@
+ hosts: all
+  tasks:
+    - name: get NFS share path info
+      shell: |
+              mount -l --type=nfs
+      register: nfsmount_output
+    - lineinfile:
+        path: nfs-results.txt
+        line: "{{ {inventory_hostname: mount_output.stdout} | string }}"
+        create: yes
+      delegate_to: localhost
