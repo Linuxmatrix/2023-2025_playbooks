@@ -1,0 +1,43 @@
+---
+- hosts: all
+  gather_facts: no
+
+  vars:
+    success_log: visudo_success.log
+    failure_log: visudo_failure.log
+
+  tasks:
+    - name: Run visudo syntax check with sudo
+      raw: sudo visudo -c
+      register: visudo_result
+      ignore_errors: yes
+
+    - name: Append success output to success log
+      local_action:
+        module: shell
+        args:
+          cmd: |
+            echo "Host: {{ inventory_hostname }}" >> {{ success_log }} &&
+            echo "Output:" >> {{ success_log }} &&
+            echo "{{ visudo_result.stdout }}" >> {{ success_log }} &&
+            echo "Errors:" >> {{ success_log }} &&
+            echo "{{ visudo_result.stderr }}" >> {{ success_log }} &&
+            echo "Return code: {{ visudo_result.rc }}" >> {{ success_log }} &&
+            echo "----------------------" >> {{ success_log }}
+      when: visudo_result.rc == 0
+      delegate_to: localhost
+
+    - name: Append failure output to failure log
+      local_action:
+        module: shell
+        args:
+          cmd: |
+            echo "Host: {{ inventory_hostname }}" >> {{ failure_log }} &&
+            echo "Output:" >> {{ failure_log }} &&
+            echo "{{ visudo_result.stdout }}" >> {{ failure_log }} &&
+            echo "Errors:" >> {{ failure_log }} &&
+            echo "{{ visudo_result.stderr }}" >> {{ failure_log }} &&
+            echo "Return code: {{ visudo_result.rc }}" >> {{ failure_log }} &&
+            echo "----------------------" >> {{ failure_log }}
+      when: visudo_result.rc != 0
+      delegate_to: localhost
