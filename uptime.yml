@@ -1,0 +1,21 @@
+- name: Get uptime in days and store results
+  hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Calculate uptime in days
+      set_fact:
+        uptime_days: "{{ (ansible_uptime_seconds / 86400) | round(2) }}"
+    - name: Store successful uptime results
+      copy:
+        content: "{{ inventory_hostname }}: Uptime - {{ uptime_days }} days\n"
+        dest: "/home/hari/prem/prodfail-uptime_successes.txt"
+        mode: "0644"
+      delegate_to: localhost
+      when: ansible_uptime_seconds is defined
+    - name: Store failed uptime results
+      copy:
+        content: "{{ inventory_hostname }}: Uptime - Failed to retrieve (Host may be down or unreachable)\n"
+        dest: "/home/hari/prem/prodfail-uptime_failures.txt"
+        mode: "0644"
+      delegate_to: localhost
+      when: ansible_uptime_seconds is not defined
