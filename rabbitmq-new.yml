@@ -1,0 +1,38 @@
+---
+- name: Install and configure RabbitMQ
+  hosts: all
+  become: yes
+  tasks:
+    - name: Add RabbitMQ repository
+      command: curl -s https://packagecloud.io/install/repositories/rabbitmq/rabbitmq-server/script.rpm.sh | sudo bash
+    - name: Download Erlang RPM
+      get_url:
+        url: https://github.com/rabbitmq/erlang-rpm/releases/download/v26.2.5.6/erlang-26.2.5.6-1.el8.x86_64.rpm
+        dest: /tmp/erlang-26.2.5.6-1.el8.x86_64.rpm
+    - name: Install Erlang RPM
+      yum:
+        name: /tmp/erlang-26.2.5.6-1.el8.x86_64.rpm
+        state: present
+    - name: Install RabbitMQ server
+      yum:
+        name: rabbitmq-server
+        state: present
+    - name: Start RabbitMQ server
+      systemd:
+        name: rabbitmq-server
+        state: started
+        enabled: yes
+    - name: Enable RabbitMQ management plugin
+      command: rabbitmq-plugins enable rabbitmq_management
+    - name: Add RabbitMQ user
+      command: rabbitmqctl add_user <admin> <password>
+      args:
+        creates: /var/lib/rabbitmq/.erlang.cookie
+    - name: Set RabbitMQ user tags
+      command: rabbitmqctl set_user_tags admin administrator
+    - name: Set RabbitMQ user permissions
+      command: rabbitmqctl set_permissions -p / admin ".*" ".*" ".*"
+    - name: Stop RabbitMQ server
+      systemd:
+        name: rabbitmq-server
+        state: stopped
