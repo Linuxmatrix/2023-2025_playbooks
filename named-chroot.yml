@@ -1,0 +1,42 @@
+- name: Check named-chroot service status
+      command: systemctl is-active named-chroot
+      register: named-chroot_service_status
+      ignore_errors: yes
+
+    - name: Check named-chroot process running
+      command: pgrep named
+      register: named-chroot_process
+      ignore_errors: yes
+
+    - name: Get uptime of the server
+      command: uptime
+      register: named-chroot_uptime
+
+    - name: Set facts for status, process, uptime
+      set_fact:
+        named-chroot_service_status_result: "{{ named-chroot_service_status.stdout | default('unknown') }}"
+        named-chroot_running: "{{ (named-chroot_process.stdout|length > 0) | ternary('running', 'not running') }}"
+        named-chroot_result: "{{ named-chroot_uptime.stdout.split(',')[0] | default('unknown') }}"
+
+
+ - name: Check named-chroot service status
+      command: systemctl is-active named-chroot
+      register: bind_service_status
+      ignore_errors: yes
+
+    - name: Check BIND process running
+      command: pgrep named
+      register: bind_process
+      ignore_errors: yes
+
+    - name: Get uptime of the server
+      command: uptime
+      register: bind_uptime
+
+    - name: Set facts for status, process, uptime
+      set_fact:
+        bind_service_status_result: >
+          {{ 'active' if bind_service_status.stdout == 'active' else 'inactive' }}
+        bind_process_running: >
+          {{ 'running' if (bind_process.stdout|length > 0) else 'not running' }}
+        bind_uptime_result: "{{ bind_uptime.stdout.split(',')[0] | default('unknown') }}"
