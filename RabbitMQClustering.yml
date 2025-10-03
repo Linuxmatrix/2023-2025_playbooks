@@ -1,0 +1,21 @@
+---
+- name: Find RabbitMQ servers and store output with host names
+  hosts: all
+  gather_facts: no
+  #remote_user: rabbitmq
+  tasks:
+    - name: Check if rabbitmq version
+      shell: rabbitmqctl stop_app
+      register: rabbitmqcluster
+      ignore_errors: yes
+    - name: joining nodes in cluster
+      shell: rabbitmqctl join_cluster rabbit@hostfosign897
+      register: rabbitmqcluster
+      ignore_errors: yes
+    - name: Store the output with host name
+      copy:
+        content: |
+          Host: {{ inventory_hostname }}
+          rabbitmqcluster : {{ rabbitmqcluster.stdout }}
+        dest: "/tmp/rabbitmqcluster_{{ inventory_hostname }}.txt"
+      when: rabbitmqcluster.stdout != ""
