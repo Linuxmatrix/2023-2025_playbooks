@@ -1,0 +1,22 @@
+---
+- name: Find RabbitMQ servers and store output with host names
+  hosts: all
+  gather_facts: no
+  #remote_user:  rabbitmq
+  tasks:
+    - name: Check if rabbitmq version
+      shell: |
+              rabbitmqctl status | grep "RabbitMQ\|rabbitmq"
+              cat /usr/lib64/erlang/releases/RELEASES
+      register: rabbitmq_version
+      ignore_errors: yes
+    - name: Copy output to file
+      copy:
+        dest: rabbitmq_version.txt
+        content: |-
+          {% for host in ansible_play_hosts_all %}
+          {{ '###' }}{{ host }}{{ '###' }}
+          {{ hostvars[host]['rabbitmq_version']['stdout'] }}
+          {% endfor %}
+      delegate_to: localhost
+      run_once: true
